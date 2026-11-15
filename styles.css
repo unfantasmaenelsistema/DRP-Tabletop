@@ -1,0 +1,202 @@
+/* ==========================================================================
+   DRP Tabletop Simulator — Estilos personalizados SOC / Centro de Mando
+   Complemento a Tailwind CSS CDN para despliegue estático en GitHub Pages
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+  --soc-canvas: #070b14;
+  --soc-surface: #0e1525;
+  --soc-border: #1e293b;
+  --soc-terminal: #050810;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--soc-canvas);
+}
+
+/* Compensación óptica en modo oscuro para mayor legibilidad */
+body {
+  background-color: var(--soc-canvas);
+  letter-spacing: 0.005em;
+}
+
+/* Alineación tabular estricta para cifras financieras, tiempos y métricas */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra de desplazamiento discreta para la consola de eventos, tablas y editores Base64 */
+#event-log-console::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+#scenario-import-textarea::-webkit-scrollbar,
+#scenario-export-textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#event-log-console::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track,
+#scenario-import-textarea::-webkit-scrollbar-track,
+#scenario-export-textarea::-webkit-scrollbar-track {
+  background: #050810;
+}
+
+#event-log-console::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb,
+#scenario-import-textarea::-webkit-scrollbar-thumb,
+#scenario-export-textarea::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+#event-log-console::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+#scenario-import-textarea::-webkit-scrollbar-thumb:hover,
+#scenario-export-textarea::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Animación sutil de entrada únicamente por opacidad/traslación en nuevas líneas de consola */
+@keyframes logEntryFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.log-entry-animate {
+  animation: logEntryFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Respeto estricto a usuarios con preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .log-entry-animate,
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   Estilos de impresión PDF (@media print) para el After Action Report (AAR)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  header,
+  footer,
+  #sla-alert-modal,
+  #scenario-modal,
+  #help-modal,
+  #command-center-view,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #aar-screen {
+    display: block !important;
+    color: #0f172a !important;
+  }
+
+  #aar-screen section,
+  #aar-screen article,
+  #aar-screen .aar-card {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #aar-screen .aar-subtle-surface {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  #aar-screen .ctf-token-box {
+    background: #f1f5f9 !important;
+    border-color: #047857 !important;
+    color: #065f46 !important;
+  }
+
+  #aar-screen h1,
+  #aar-screen h2,
+  #aar-screen h3,
+  #aar-screen strong,
+  #aar-screen .text-slate-50,
+  #aar-screen .text-slate-100,
+  #aar-screen .text-slate-200 {
+    color: #0f172a !important;
+  }
+
+  #aar-screen .text-slate-300,
+  #aar-screen .text-slate-400,
+  #aar-screen .text-slate-500 {
+    color: #475569 !important;
+  }
+
+  #aar-screen .text-emerald-400,
+  #aar-screen .text-emerald-300 {
+    color: #047857 !important;
+  }
+
+  #aar-screen .text-amber-400,
+  #aar-screen .text-amber-300 {
+    color: #b45309 !important;
+  }
+
+  #aar-screen .text-red-400,
+  #aar-screen .text-red-300 {
+    color: #b91c1c !important;
+  }
+
+  #aar-screen .text-sky-400,
+  #aar-screen .text-sky-300 {
+    color: #0369a1 !important;
+  }
+
+  #aar-screen .bg-slate-800 {
+    background-color: #e2e8f0 !important;
+  }
+
+  #aar-screen tr {
+    border-color: #cbd5e1 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .aar-print-header {
+    display: flex !important;
+  }
+}

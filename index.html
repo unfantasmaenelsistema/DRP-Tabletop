@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DRP Tabletop — Centro de Mando y Simulación SOC</title>
+    <meta
+      name="description"
+      content="Simulador educativo 100% frontend de Disaster Recovery Plan (DRP Tabletop) estilo SOC con métricas en tiempo real, análisis BIA y consola de eventos."
+    />
+    <meta property="og:title" content="DRP Tabletop — Centro de Mando y Simulación SOC" />
+    <meta
+      property="og:description"
+      content="Simulador educativo 100% frontend de Disaster Recovery Plan (DRP Tabletop) estilo SOC con métricas en tiempo real, análisis BIA y consola de eventos."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/png" href="assets/aistudio/icono_81a3db5b.png" />
+
+    <!-- Tipografía corporativa y monoespaciada tabular -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CSS vía CDN para despliegue estático directo en GitHub Pages -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+            },
+            colors: {
+              soc: {
+                canvas: '#070B14',
+                surface: '#0E1525',
+                elevated: '#131C31',
+                terminal: '#050810',
+                border: '#1E293B',
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <link rel="stylesheet" href="./styles.css" />
+    <!-- D3.js v7 vía CDN para visualización analítica de alertas en Vanilla JS -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  </head>
+  <body class="bg-soc-canvas text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
+    <!-- Barra superior de 3 zonas -->
+    <header class="no-print sticky top-0 z-30 border-b border-slate-800/90 bg-soc-canvas/95 backdrop-blur-md">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3 sm:gap-8">
+        <!-- Zona 1: Marca y logotipo sin distorsión -->
+        <a
+          href="https://www.unfantasmaenelsistema.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2.5 sm:gap-3 whitespace-nowrap shrink-0 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded-lg pr-2 min-w-0"
+          title="Visitar Un Fantasma en el Sistema — GhostAcademy"
+        >
+          <span class="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-slate-100 p-1 flex items-center justify-center shrink-0 ring-1 ring-slate-700/80 transition-transform duration-150 group-hover:scale-[1.03]">
+            <img
+              src="assets/aistudio/icono_81a3db5b.png"
+              alt="Logotipo de Un Fantasma en el Sistema"
+              class="h-full w-full object-contain"
+              referrerpolicy="no-referrer"
+            />
+          </span>
+          <span class="flex flex-col leading-tight">
+            <span class="text-base sm:text-lg font-semibold tracking-tight text-slate-50">DRP Tabletop</span>
+            <span class="text-[10px] font-mono text-sky-400 tracking-wide hidden sm:inline">GhostAcademy · Auditoría SOC</span>
+          </span>
+        </a>
+
+        <!-- Zona 2: Enlaces de navegación de una sola línea -->
+        <nav aria-label="Navegación principal" class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
+          <a
+            href="#panel-estado"
+            class="hover:text-slate-100 transition-colors duration-150 whitespace-nowrap shrink-0 py-1 border-b border-transparent hover:border-slate-500"
+          >
+            Estado Operativo
+          </a>
+          <a
+            href="#panel-triaje"
+            class="hover:text-slate-100 transition-colors duration-150 whitespace-nowrap shrink-0 py-1 border-b border-transparent hover:border-slate-500"
+          >
+            Triaje e Injects
+          </a>
+          <a
+            href="#panel-bia"
+            class="hover:text-slate-100 transition-colors duration-150 whitespace-nowrap shrink-0 py-1 border-b border-transparent hover:border-slate-500"
+          >
+            Matriz BIA
+          </a>
+          <a
+            href="#panel-eventos"
+            class="hover:text-slate-100 transition-colors duration-150 whitespace-nowrap shrink-0 py-1 border-b border-transparent hover:border-slate-500"
+          >
+            Registro SOC
+          </a>
+          <a
+            href="https://www.unfantasmaenelsistema.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 transition-colors duration-150 whitespace-nowrap shrink-0 py-1 border-b border-transparent hover:border-sky-400"
+          >
+            <span>unfantasmaenelsistema.com</span>
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17L17 7"></path>
+              <path d="M7 7h10v10"></path>
+            </svg>
+          </a>
+        </nav>
+
+        <!-- Zona 3: Acción principal y Guía Táctica -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            id="btn-open-help"
+            type="button"
+            title="Guía rápida DRP, glosario y atajos (?)"
+            aria-label="Abrir guía rápida DRP y atajos de teclado"
+            class="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-slate-700 bg-soc-surface hover:bg-slate-800 text-xs font-medium text-slate-300 hover:text-slate-100 transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <svg class="w-4 h-4 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span class="hidden sm:inline">Guía DRP</span>
+          </button>
+
+          <button
+            id="btn-start-exercise"
+            type="button"
+            class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 min-h-[40px] rounded-lg text-sm font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-soc-canvas"
+          >
+            <svg id="btn-start-icon" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="6 3 20 12 6 21 6 3"></polygon>
+            </svg>
+            <span id="btn-start-label">Iniciar Ejercicio</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido principal del Dashboard de Mando -->
+    <main class="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <!-- Vista Activa del Centro de Mando (se oculta al finalizar en fase de Resolución) -->
+      <div id="command-center-view" class="space-y-6">
+      <!-- Banner de Alerta Crítica por Superación de SLA / RTO -->
+      <div
+        id="sla-breach-banner"
+        role="alert"
+        class="hidden rounded-xl border border-red-500/70 bg-red-950/60 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      >
+        <div class="flex items-start sm:items-center gap-3">
+          <span class="inline-flex h-8 w-8 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 items-center justify-center shrink-0 animate-pulse">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </span>
+          <div>
+            <div id="sla-banner-title" class="text-xs font-mono font-semibold text-red-300 animate-pulse">
+              ALERTA SLA / RTO INCUMPLIDO
+            </div>
+            <p id="sla-banner-message" class="text-xs text-red-100 mt-0.5">
+              Servicios críticos han superado su límite teórico de recuperación.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            id="btn-open-latest-sla-alert"
+            type="button"
+            class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+          >
+            Ver escalado
+          </button>
+          <a
+            href="#panel-bia"
+            class="px-3 py-1.5 rounded-lg border border-red-500/40 bg-red-950/80 hover:bg-red-900/60 text-red-100 text-xs font-medium transition-colors duration-150 whitespace-nowrap shrink-0"
+          >
+            Revisar BIA
+          </a>
+        </div>
+      </div>
+
+      <!-- Franja de contexto del escenario y controles de simulación -->
+      <section
+        aria-label="Resumen del escenario activo"
+        class="rounded-xl border border-slate-800 bg-soc-surface p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"
+      >
+        <div class="space-y-2 max-w-3xl">
+          <div class="flex flex-wrap items-center gap-2.5 text-xs text-slate-400">
+            <span
+              id="exercise-phase-badge"
+              class="inline-flex items-center gap-1.5 font-mono font-semibold px-2.5 py-1 rounded-md border border-sky-500/30 bg-sky-500/10 text-sky-300"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span id="exercise-phase-text">Preparación</span>
+            </span>
+            <span aria-hidden="true">·</span>
+            <span id="scenario-code" class="font-mono text-slate-300">DRP-TTX-2026-01</span>
+            <span aria-hidden="true">·</span>
+            <span id="scenario-org">Grupo Ibérico de Logística S.A.</span>
+          </div>
+
+          <h1 id="scenario-title" class="text-xl sm:text-2xl font-semibold tracking-tight text-slate-50 text-balance">
+            Ataque de Ransomware en la sede principal
+          </h1>
+          <p id="scenario-description" class="text-sm text-slate-300 leading-relaxed">
+            Simulación tabletop de respuesta ante incidentes y continuidad de negocio. Evalúa el impacto operativo y financiero tras la detección de cifrado masivo en sistemas centrales.
+          </p>
+
+          <!-- Selector de escenario predefinido -->
+          <div id="scenario-selector-wrap" class="pt-1 flex flex-wrap items-center gap-2.5">
+            <label for="scenario-select" class="text-xs font-medium text-slate-400 whitespace-nowrap">
+              Escenario activo:
+            </label>
+            <select
+              id="scenario-select"
+              class="rounded-lg border border-slate-700 bg-soc-canvas px-3 py-1.5 text-xs font-medium text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed max-w-full"
+            >
+              <option value="scn-ransomware-hq-01">DRP-TTX-2026-01 · Ransomware en sede principal</option>
+              <option value="scn-cloud-outage-02">DRP-TTX-2026-02 · Caída de Región Cloud y Corrupción BD</option>
+              <option value="scn-supply-chain-03">DRP-TTX-2026-03 · Compromiso Supply Chain CI/CD</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Controles secundarios y persistencia del ejercicio -->
+        <div class="flex flex-col sm:flex-row sm:flex-wrap lg:flex-col xl:items-end gap-2.5 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-800">
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1 p-1 rounded-lg bg-soc-canvas border border-slate-800" role="group" aria-label="Velocidad de simulación">
+              <span class="text-xs text-slate-400 px-2 font-medium whitespace-nowrap">Velocidad</span>
+              <button
+                type="button"
+                data-speed="1"
+                class="speed-btn px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors duration-150 bg-slate-800 text-slate-100 whitespace-nowrap shrink-0"
+              >
+                1x
+              </button>
+              <button
+                type="button"
+                data-speed="5"
+                class="speed-btn px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors duration-150 text-slate-400 hover:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                5x
+              </button>
+              <button
+                type="button"
+                data-speed="15"
+                class="speed-btn px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors duration-150 text-slate-400 hover:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                15x
+              </button>
+            </div>
+
+            <button
+              id="btn-pause-exercise"
+              type="button"
+              disabled
+              class="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[38px] rounded-lg border border-slate-700 bg-soc-elevated text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+              <span id="btn-pause-label">Pausar</span>
+            </button>
+
+            <button
+              id="btn-reset-exercise"
+              type="button"
+              disabled
+              class="inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[38px] rounded-lg border border-slate-700 bg-transparent text-xs font-medium text-slate-300 hover:bg-slate-800/70 hover:text-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              <span>Reiniciar</span>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              id="btn-open-load-scenario"
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[34px] rounded-lg border border-sky-500/35 bg-sky-500/10 hover:bg-sky-500/20 text-xs font-medium text-sky-300 transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>Cargar Escenario desde String</span>
+            </button>
+
+            <button
+              id="btn-open-export-scenario"
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[34px] rounded-lg border border-slate-700 bg-soc-canvas hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <span>Exportar Escenario (Base64)</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL 1: Panel de Estado -->
+      <section id="panel-estado" aria-labelledby="heading-panel-estado" class="space-y-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="heading-panel-estado" class="text-base font-semibold text-slate-100 tracking-tight">
+            Panel de Estado Operativo
+          </h2>
+          <p id="status-phase-note" class="text-xs text-slate-400">
+            En espera de activación del ejercicio para iniciar telemetría de impacto.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <!-- KPI 1: Tiempo Inactivo (Downtime / RTO Real) -->
+          <article class="rounded-xl border border-slate-800 bg-soc-surface p-5 flex flex-col justify-between gap-4">
+            <div class="flex items-center justify-between gap-3">
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <svg class="w-3.5 h-3.5 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Tiempo Inactivo (RTO Real)</span>
+              </span>
+              <span id="downtime-state-tag" class="text-xs font-mono text-slate-400">En espera</span>
+            </div>
+            <div>
+              <p id="metric-downtime" class="text-3xl font-mono font-semibold tracking-tight text-slate-50 tabular-nums">
+                00:00:00
+              </p>
+              <p id="metric-impacted-services" class="mt-2 text-xs text-slate-400 tabular-nums">
+                0 de 5 servicios críticos afectados
+              </p>
+            </div>
+          </article>
+
+          <!-- KPI 2: Pérdida de Datos (RPO Real) -->
+          <article class="rounded-xl border border-slate-800 bg-soc-surface p-5 flex flex-col justify-between gap-4">
+            <div class="flex items-center justify-between gap-3">
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <svg class="w-3.5 h-3.5 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                </svg>
+                <span>Pérdida de Datos (RPO Real)</span>
+              </span>
+              <span id="rpo-state-tag" class="text-xs font-mono text-slate-400">Sin pérdida</span>
+            </div>
+            <div>
+              <p id="metric-rpo" class="text-3xl font-mono font-semibold tracking-tight text-slate-50 tabular-nums">
+                0 min
+              </p>
+              <p id="metric-rpo-note" class="mt-2 text-xs text-slate-400 tabular-nums">
+                Ventana de datos no recuperados
+              </p>
+            </div>
+          </article>
+
+          <!-- KPI 3: Coste Económico Acumulado -->
+          <article class="rounded-xl border border-slate-800 bg-soc-surface p-5 flex flex-col justify-between gap-4">
+            <div class="flex items-center justify-between gap-3">
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span>Coste Económico Acumulado</span>
+              </span>
+              <span id="cost-currency-tag" class="text-xs font-mono text-slate-400">EUR · Total</span>
+            </div>
+            <div>
+              <p id="metric-cost" class="text-3xl font-mono font-semibold tracking-tight text-slate-50 tabular-nums">
+                0,00 €
+              </p>
+              <p id="metric-burn-rate" class="mt-2 text-xs text-slate-400 tabular-nums">
+                Tasa de impacto actual: <span class="font-mono text-slate-300">0 €/min</span>
+              </p>
+            </div>
+          </article>
+
+          <!-- KPI 4: Nivel de Estrés del Equipo -->
+          <article id="kpi-stress-card" class="rounded-xl border border-slate-800 bg-soc-surface p-5 flex flex-col justify-between gap-4 transition-colors duration-500">
+            <div class="flex items-center justify-between gap-3">
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <svg id="metric-stress-icon" class="w-3.5 h-3.5 text-emerald-400 shrink-0 transition-colors duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span>Nivel de Estrés del Equipo</span>
+              </span>
+              <span id="metric-stress-label" class="text-xs font-medium text-emerald-400 transition-colors duration-500">Calma operativa</span>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-baseline justify-between gap-2">
+                <p id="metric-stress-value" class="text-3xl font-mono font-semibold tracking-tight text-slate-50 tabular-nums transition-colors duration-500">
+                  15%
+                </p>
+                <span class="text-xs text-slate-400 font-mono tabular-nums">Umbral: 80%</span>
+              </div>
+              <div
+                class="relative w-full h-2.5 rounded-full bg-slate-800 overflow-hidden"
+                role="progressbar"
+                aria-labelledby="heading-panel-estado"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="15"
+                id="stress-progressbar"
+              >
+                <div
+                  id="metric-stress-bar"
+                  class="h-full rounded-full bg-emerald-500 transition-all duration-500 ease-out"
+                  style="width: 15%;"
+                ></div>
+                <span
+                  aria-hidden="true"
+                  title="Umbral crítico 80%"
+                  class="pointer-events-none absolute top-0 bottom-0 left-[80%] w-px bg-slate-400/60"
+                ></span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- MOTOR DE TURNOS: Panel de Triaje, Injects y Decisiones Bajo Presión -->
+      <section
+        id="panel-triaje"
+        aria-labelledby="heading-panel-triaje"
+        class="rounded-xl border border-slate-800 bg-soc-surface overflow-hidden"
+      >
+        <!-- Cabecera del Motor de Turnos y Progresión de Fases -->
+        <div class="px-5 py-4 border-b border-slate-800 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="M12 8v4"></path>
+                <path d="M12 16h.01"></path>
+              </svg>
+              <h2 id="heading-panel-triaje" class="text-base font-semibold text-slate-100 tracking-tight">
+                Centro de Triaje e Injects
+              </h2>
+              <span id="turn-counter-label" class="text-xs font-mono text-slate-400 tabular-nums">
+                En espera de inicio
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Analiza cada actualización operativa del incidente y ejecuta la decisión bajo presión del comité DRP.
+            </p>
+          </div>
+
+          <!-- Stepper de fases de turno -->
+          <ol id="turn-stepper" class="flex flex-wrap items-center gap-2 text-xs" aria-label="Fases del incidente">
+            <!-- Renderizado dinámicamente desde app.js -->
+          </ol>
+        </div>
+
+        <!-- Barra de Presión Temporal (Temporizador visual de 60s por turno) -->
+        <div
+          id="turn-timer-container"
+          class="hidden px-5 py-3 border-b border-slate-800 bg-soc-canvas/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-medium text-slate-300">Presión temporal del turno</span>
+            <span id="turn-timer-status" class="text-xs font-mono text-sky-400">En plazo</span>
+          </div>
+          <div class="flex items-center gap-3 flex-1 sm:max-w-md">
+            <div class="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden" aria-hidden="true">
+              <div
+                id="turn-timer-bar"
+                class="h-full rounded-full bg-sky-500 transition-all duration-200 ease-linear"
+                style="width: 100%;"
+              ></div>
+            </div>
+            <span
+              id="turn-timer-value"
+              class="font-mono text-sm font-semibold text-slate-100 tabular-nums w-14 text-right shrink-0"
+            >
+              01:00
+            </span>
+          </div>
+        </div>
+
+        <!-- Cuerpo del Panel de Triaje (Estado Preparación / Turno Activo / Informe Final) -->
+        <div id="triage-body" class="p-5 sm:p-6">
+          <!-- Renderizado dinámicamente desde app.js -->
+        </div>
+      </section>
+
+      <!-- Zona inferior de 2 columnas: Matriz BIA + Registro de Eventos -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <!-- PANEL 2: Panel de BIA (Business Impact Analysis) -->
+        <section
+          id="panel-bia"
+          aria-labelledby="heading-panel-bia"
+          class="lg:col-span-7 rounded-xl border border-slate-800 bg-soc-surface flex flex-col overflow-hidden"
+        >
+          <div class="px-5 py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="heading-panel-bia" class="text-base font-semibold text-slate-100 tracking-tight flex items-center gap-2">
+                <svg class="w-4 h-4 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                  <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                  <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                </svg>
+                <span>Análisis de Impacto al Negocio (BIA)</span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Servicios críticos, objetivos RTO/RPO teóricos y estado operativo en tiempo real.
+              </p>
+            </div>
+
+            <!-- Filtros interactivos del BIA -->
+            <div class="flex items-center gap-1 p-1 rounded-lg bg-soc-canvas border border-slate-800" role="tablist" aria-label="Filtrar servicios BIA">
+              <button
+                type="button"
+                data-bia-filter="ALL"
+                class="bia-filter-btn px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 bg-slate-800 text-slate-100 whitespace-nowrap shrink-0"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                data-bia-filter="CRITICAL"
+                class="bia-filter-btn px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 text-slate-400 hover:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                Nivel Crítico
+              </button>
+              <button
+                type="button"
+                data-bia-filter="IMPACTED"
+                class="bia-filter-btn px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 text-slate-400 hover:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                Afectados
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabla BIA de alta densidad -->
+          <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-xs font-medium text-slate-400 bg-soc-canvas/40">
+                  <th scope="col" class="py-3 pl-5 pr-3">Servicio Crítico</th>
+                  <th scope="col" class="py-3 px-3 text-right">RTO Teórico</th>
+                  <th scope="col" class="py-3 px-3 text-right">RPO Teórico</th>
+                  <th scope="col" class="py-3 px-3 text-right">Impacto</th>
+                  <th scope="col" class="py-3 pl-3 pr-5 text-right">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="bia-table-body" class="divide-y divide-slate-800/80 text-sm">
+                <!-- Renderizado dinámicamente desde app.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Inspector técnico del servicio seleccionado -->
+          <div id="bia-service-detail" class="border-t border-slate-800 bg-soc-canvas/60 px-5 py-4">
+            <!-- Renderizado dinámicamente desde app.js -->
+          </div>
+        </section>
+
+        <!-- PANEL 3: Panel de Registro de Eventos (Event Log) -->
+        <section
+          id="panel-eventos"
+          aria-labelledby="heading-panel-eventos"
+          class="lg:col-span-5 rounded-xl border border-slate-800 bg-soc-surface flex flex-col overflow-hidden"
+        >
+          <div class="px-5 py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="heading-panel-eventos" class="text-base font-semibold text-slate-100 tracking-tight flex items-center gap-2">
+                <svg class="w-4 h-4 text-sky-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="4 17 10 11 4 5"></polyline>
+                  <line x1="12" y1="19" x2="20" y2="19"></line>
+                </svg>
+                <span>Registro de Eventos (SOC)</span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Consola cronológica de alertas SIEM, infraestructura y comunicaciones.
+              </p>
+            </div>
+
+            <button
+              id="btn-export-log"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg border border-slate-700 bg-soc-elevated hover:bg-slate-800 text-xs font-medium text-slate-200 transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Exportar (.txt)</span>
+            </button>
+          </div>
+
+          <!-- Filtros de severidad de consola -->
+          <div class="px-5 py-2.5 border-b border-slate-800/80 bg-soc-canvas/40 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-1" role="tablist" aria-label="Filtrar nivel de eventos">
+              <button
+                type="button"
+                data-log-filter="ALL"
+                class="log-filter-btn px-2.5 py-1 text-xs font-medium rounded-md transition-colors duration-150 bg-slate-800 text-slate-100 whitespace-nowrap shrink-0"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                data-log-filter="CRITICAL"
+                class="log-filter-btn px-2.5 py-1 text-xs font-medium rounded-md transition-colors duration-150 text-slate-400 hover:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                Crítico
+              </button>
+              <button
+                type="button"
+                data-log-filter="WARN"
+                class="log-filter-btn px-2.5 py-1 text-xs font-medium rounded-md transition-colors duration-150 text-slate-400 hover:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                Alerta
+              </button>
+              <button
+                type="button"
+                data-log-filter="INFO"
+                class="log-filter-btn px-2.5 py-1 text-xs font-medium rounded-md transition-colors duration-150 text-slate-400 hover:text-slate-100 whitespace-nowrap shrink-0"
+              >
+                Info
+              </button>
+            </div>
+            <span id="log-count-label" class="text-xs font-mono text-slate-400 tabular-nums">0 entradas</span>
+          </div>
+
+          <!-- Gráfico D3: Frecuencia de alertas por severidad a lo largo de los turnos -->
+          <div id="event-log-chart-section" class="px-5 py-3 border-b border-slate-800/80 bg-soc-canvas/60 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-[11px] font-medium text-slate-300">
+                Frecuencia de alertas por severidad y turno
+              </span>
+              <div class="flex items-center gap-3 text-[11px] font-mono text-slate-400" aria-label="Leyenda del gráfico">
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="h-2 w-2 rounded-sm bg-red-500 inline-block" aria-hidden="true"></span>
+                  <span>Crítico</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="h-2 w-2 rounded-sm bg-amber-500 inline-block" aria-hidden="true"></span>
+                  <span>Alerta</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="h-2 w-2 rounded-sm bg-sky-400 inline-block" aria-hidden="true"></span>
+                  <span>Info</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="relative w-full">
+              <div
+                id="event-log-d3-chart"
+                class="w-full h-[146px]"
+                role="img"
+                aria-label="Gráfico de barras de frecuencia de alertas por severidad a lo largo de los turnos"
+              ></div>
+              <div
+                id="event-chart-tooltip"
+                class="pointer-events-none hidden absolute z-10 rounded-md border border-slate-700 bg-soc-surface/95 px-2.5 py-1.5 font-mono text-[11px] text-slate-100 shadow-lg whitespace-nowrap"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Consola de texto estilo terminal -->
+          <div
+            id="event-log-console"
+            role="log"
+            aria-live="polite"
+            class="flex-1 bg-soc-terminal p-4 font-mono text-xs leading-relaxed overflow-y-auto h-[300px] lg:h-[320px] space-y-2.5"
+          >
+            <!-- Entradas de log inyectadas por app.js -->
+          </div>
+        </section>
+      </div>
+      </div>
+
+      <!-- PANTALLA COMPLETA DE RESOLUCIÓN: After Action Report (AAR) -->
+      <section
+        id="aar-screen"
+        aria-labelledby="aar-main-title"
+        class="hidden space-y-6"
+      >
+        <!-- Renderizado dinámicamente al finalizar los turnos desde app.js -->
+      </section>
+    </main>
+
+    <!-- Pie de página sobrio -->
+    <footer class="no-print border-t border-slate-800/80 bg-soc-canvas mt-auto">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <p>Simulador Educativo DRP Tabletop · Ejecución 100% local en navegador</p>
+        <a
+          href="https://www.unfantasmaenelsistema.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-slate-300 hover:text-sky-400 transition-colors duration-150"
+        >
+          Un Fantasma en el Sistema — unfantasmaenelsistema.com
+        </a>
+      </div>
+    </footer>
+
+    <!-- Modal de Alerta Crítica por Incumplimiento de SLA / RTO (Llamada CEO / Quejas de Clientes) -->
+    <div
+      id="sla-alert-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sla-modal-title"
+      class="no-print hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+    >
+      <div class="w-full max-w-lg rounded-xl border border-red-500/70 bg-soc-surface shadow-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-red-500/30 bg-red-950/50 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="h-8 w-8 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 flex items-center justify-center shrink-0 animate-pulse">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+            </span>
+            <div>
+              <div id="sla-modal-channel" class="text-[11px] font-mono font-semibold text-red-300 animate-pulse">
+                ESCALADO CRÍTICO DE NEGOCIO
+              </div>
+              <div id="sla-modal-caller" class="text-xs text-red-200">
+                Dirección General
+              </div>
+            </div>
+          </div>
+          <span class="text-xs font-mono text-red-300 px-2 py-0.5 rounded border border-red-500/40 bg-red-950/80">
+            SLA Superado
+          </span>
+        </div>
+
+        <div class="p-5 sm:p-6 space-y-4">
+          <div class="space-y-1.5">
+            <h3 id="sla-modal-title" class="text-base sm:text-lg font-semibold text-slate-50">
+              Incumplimiento de RTO en servicio crítico
+            </h3>
+            <p id="sla-modal-service-meta" class="text-xs font-mono text-red-300 tabular-nums">
+              RTO Teórico: 30 min · Downtime Real: 31:00
+            </p>
+          </div>
+
+          <blockquote
+            id="sla-modal-quote"
+            class="rounded-lg border border-slate-800 bg-soc-canvas/80 p-4 text-sm text-slate-200 leading-relaxed"
+          >
+            Mensaje de escalado.
+          </blockquote>
+
+          <p class="text-xs text-slate-400">
+            El temporizador de decisión permanece en pausa mientras revisas esta alerta de escalado.
+          </p>
+
+          <div class="flex items-center justify-end gap-3 pt-1">
+            <button
+              id="btn-close-sla-modal"
+              type="button"
+              class="inline-flex items-center justify-center px-4 py-2 min-h-[40px] rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-colors duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            >
+              Entendido, volver al triaje
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Persistencia de Escenario (Importar / Exportar Base64 para GhostAcademy) -->
+    <div
+      id="scenario-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="scenario-modal-title"
+      class="no-print hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+    >
+      <div class="w-full max-w-2xl rounded-xl border border-slate-700 bg-soc-surface shadow-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-800 bg-soc-canvas/70 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="h-8 w-8 rounded-lg bg-sky-500/15 border border-sky-500/40 text-sky-400 flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+            </span>
+            <div>
+              <h3 id="scenario-modal-title" class="text-sm sm:text-base font-semibold text-slate-50">
+                Gestión de Escenario (Base64 · GhostAcademy)
+              </h3>
+              <p class="text-xs text-slate-400">
+                Importa o exporta la configuración JSON inicial del simulador codificada en Base64.
+              </p>
+            </div>
+          </div>
+
+          <button
+            id="btn-close-scenario-modal"
+            type="button"
+            aria-label="Cerrar ventana"
+            class="h-8 w-8 rounded-lg border border-slate-700 bg-soc-elevated hover:bg-slate-800 text-slate-300 flex items-center justify-center transition-colors duration-150 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Selector de modo: Cargar vs Exportar -->
+        <div class="px-5 pt-4 flex items-center gap-2 border-b border-slate-800 bg-soc-canvas/40">
+          <button
+            id="tab-scenario-import"
+            type="button"
+            class="px-3.5 py-2 text-xs font-semibold border-b-2 border-sky-500 text-sky-300 transition-colors duration-150"
+          >
+            Cargar Escenario desde String
+          </button>
+          <button
+            id="tab-scenario-export"
+            type="button"
+            class="px-3.5 py-2 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors duration-150"
+          >
+            Exportar Escenario Actual (Base64)
+          </button>
+        </div>
+
+        <!-- Panel Importar -->
+        <div id="scenario-import-pane" class="p-5 space-y-4">
+          <div class="space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label for="scenario-import-textarea" class="block text-xs font-medium text-slate-300">
+                Pega el JSON del escenario (o string Base64 exportado):
+              </label>
+              <span class="text-[11px] font-mono text-slate-400">
+                Llaves requeridas: id, nombre, eventos
+              </span>
+            </div>
+            <textarea
+              id="scenario-import-textarea"
+              rows="6"
+              spellcheck="false"
+              aria-describedby="scenario-validation-badges scenario-modal-feedback"
+              placeholder='{"id": "scn-custom-01", "nombre": "Simulacro DDoS", "eventos": [{"titulo": "Saturación WAF", "descripcion": "Tráfico anómalo en puerto 443"}]}'
+              class="w-full rounded-lg border border-slate-700 bg-soc-terminal p-3 font-mono text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors duration-150"
+            ></textarea>
+
+            <!-- Indicadores de validación en tiempo real -->
+            <div id="scenario-validation-badges" class="flex flex-wrap items-center gap-2 pt-0.5" aria-live="polite">
+              <span id="val-chip-json" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-800 bg-soc-canvas text-[11px] font-mono text-slate-400">
+                <span>○</span>
+                <span>JSON válido</span>
+              </span>
+              <span id="val-chip-id" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-800 bg-soc-canvas text-[11px] font-mono text-slate-400">
+                <span>○</span>
+                <span>id</span>
+              </span>
+              <span id="val-chip-nombre" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-800 bg-soc-canvas text-[11px] font-mono text-slate-400">
+                <span>○</span>
+                <span>nombre</span>
+              </span>
+              <span id="val-chip-eventos" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-800 bg-soc-canvas text-[11px] font-mono text-slate-400">
+                <span>○</span>
+                <span>eventos</span>
+              </span>
+            </div>
+          </div>
+
+          <div id="scenario-modal-feedback" class="hidden rounded-lg border px-3.5 py-2.5 text-xs"></div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <button
+              id="btn-restore-default-scenario"
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] rounded-lg border border-slate-700 bg-transparent hover:bg-slate-800 text-xs font-medium text-slate-300 transition-colors duration-150 whitespace-nowrap"
+            >
+              Restaurar escenario base
+            </button>
+
+            <button
+              id="btn-apply-imported-scenario"
+              type="button"
+              disabled
+              class="inline-flex items-center justify-center gap-2 px-4 py-2 min-h-[38px] rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-sky-600 text-white text-xs font-semibold transition-colors duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Validar y Cargar Escenario</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel Exportar -->
+        <div id="scenario-export-pane" class="hidden p-5 space-y-4">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label for="scenario-export-textarea" class="block text-xs font-medium text-slate-300">
+                Configuración inicial codificada en Base64:
+              </label>
+              <span id="scenario-export-meta" class="text-[11px] font-mono text-slate-400 tabular-nums">
+                0 bytes
+              </span>
+            </div>
+            <textarea
+              id="scenario-export-textarea"
+              rows="6"
+              readonly
+              spellcheck="false"
+              class="w-full rounded-lg border border-slate-700 bg-soc-terminal p-3 font-mono text-xs text-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            ></textarea>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-end gap-2.5 pt-1">
+            <button
+              id="btn-download-scenario-json"
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] rounded-lg border border-slate-700 bg-soc-elevated hover:bg-slate-800 text-xs font-medium text-slate-200 transition-colors duration-150 whitespace-nowrap"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Descargar JSON editable</span>
+            </button>
+
+            <button
+              id="btn-copy-scenario-base64"
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[38px] rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition-colors duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+            >
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="btn-copy-scenario-label">Copiar String Base64</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Guía Táctica DRP, Glosario y Atajos -->
+    <div
+      id="help-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-modal-title"
+      class="no-print hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+    >
+      <div class="w-full max-w-2xl rounded-xl border border-slate-700 bg-soc-surface shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="px-5 py-4 border-b border-slate-800 bg-soc-canvas/70 flex items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-2.5">
+            <span class="h-8 w-8 rounded-lg bg-sky-500/15 border border-sky-500/40 text-sky-400 flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+            </span>
+            <div>
+              <h3 id="help-modal-title" class="text-sm sm:text-base font-semibold text-slate-50">
+                Guía Táctica DRP Tabletop · GhostAcademy
+              </h3>
+              <p class="text-xs text-slate-400">
+                Conceptos clave de continuidad de negocio, evaluación CTF y atajos del operador SOC.
+              </p>
+            </div>
+          </div>
+
+          <button
+            id="btn-close-help-modal"
+            type="button"
+            aria-label="Cerrar guía"
+            class="h-8 w-8 rounded-lg border border-slate-700 bg-soc-elevated hover:bg-slate-800 text-slate-300 flex items-center justify-center transition-colors duration-150 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-5 overflow-y-auto space-y-5 text-xs sm:text-sm text-slate-300">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="rounded-lg border border-slate-800 bg-soc-canvas/70 p-3.5 space-y-1">
+              <div class="font-mono text-xs font-semibold text-sky-400">RTO (Recovery Time Objective)</div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Tiempo máximo tolerable que un servicio crítico puede permanecer inactivo antes de provocar incumplimiento de SLA o pérdidas graves.
+              </p>
+            </div>
+            <div class="rounded-lg border border-slate-800 bg-soc-canvas/70 p-3.5 space-y-1">
+              <div class="font-mono text-xs font-semibold text-emerald-400">RPO (Recovery Point Objective)</div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Ventana máxima de pérdida de datos aceptable medida hacia atrás desde el momento del incidente hasta la última copia limpia válida.
+              </p>
+            </div>
+            <div class="rounded-lg border border-slate-800 bg-soc-canvas/70 p-3.5 space-y-1">
+              <div class="font-mono text-xs font-semibold text-amber-400">BIA &amp; Dependencias</div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                El Análisis de Impacto al Negocio prioriza la recuperación según coste por minuto y árbol de dependencias (Identidad → Transaccional → ERP).
+              </p>
+            </div>
+            <div class="rounded-lg border border-slate-800 bg-soc-canvas/70 p-3.5 space-y-1">
+              <div class="font-mono text-xs font-semibold text-sky-400">Modo CTF (&gt; 80 pts)</div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                Al finalizar el ejercicio con más de 80/100 puntos (RTO 35 + RPO 30 + Dinero Salvado 35), se genera el token <code class="font-mono text-emerald-300">CTF{DRP_M4st3r_...}</code>.
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-slate-800 bg-soc-canvas/70 p-4 space-y-2">
+            <div class="text-xs font-semibold text-slate-100">Atajos de teclado operativos</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+              <div class="rounded border border-slate-800 bg-soc-surface px-2.5 py-1.5 text-slate-300">
+                <span class="text-sky-400">A–D / 1–4</span> · Elegir opción
+              </div>
+              <div class="rounded border border-slate-800 bg-soc-surface px-2.5 py-1.5 text-slate-300">
+                <span class="text-sky-400">P</span> · Pausar / Reanudar
+              </div>
+              <div class="rounded border border-slate-800 bg-soc-surface px-2.5 py-1.5 text-slate-300">
+                <span class="text-sky-400">?</span> · Abrir guía
+              </div>
+              <div class="rounded border border-slate-800 bg-soc-surface px-2.5 py-1.5 text-slate-300">
+                <span class="text-sky-400">Esc</span> · Cerrar modal
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
