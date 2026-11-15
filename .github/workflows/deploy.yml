@@ -2,8 +2,7 @@ name: Desplegar DRP Tabletop en GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: ['main']
   workflow_dispatch:
 
 permissions:
@@ -12,32 +11,35 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v4
+      - name: Clonar repositorio
+        uses: actions/checkout@v7
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
+      - name: Configurar Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: npm
+          bun-version: latest
 
       - name: Instalar dependencias
-        run: npm ci
+        run: bun install --frozen-lockfile
 
-      - name: Compilar aplicación estática
-        run: npm run build
+      # Compila Tailwind (antes se cargaba desde el CDN de desarrollo), empaqueta app.js y copia el logo
+      - name: Compilar para producción
+        run: bun run build
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v6
 
       - name: Subir artefacto de GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
-          path: dist
+          path: ./dist
 
   deploy:
     environment:
@@ -48,4 +50,4 @@ jobs:
     steps:
       - name: Desplegar en GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
