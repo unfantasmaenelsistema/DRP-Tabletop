@@ -14,8 +14,9 @@
       content="Simulador educativo 100% frontend de Disaster Recovery Plan (DRP Tabletop) estilo SOC con métricas en tiempo real, análisis BIA y consola de eventos."
     />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content="./assets/logo.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/png" href="assets/aistudio/icono_81a3db5b.png" />
+    <link rel="icon" type="image/png" href="./assets/logo.png" />
 
     <!-- Tipografía corporativa y monoespaciada tabular -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,34 +26,11 @@
       rel="stylesheet"
     />
 
-    <!-- Tailwind CSS vía CDN para despliegue estático directo en GitHub Pages -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
-              mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
-            },
-            colors: {
-              soc: {
-                canvas: '#070B14',
-                surface: '#0E1525',
-                elevated: '#131C31',
-                terminal: '#050810',
-                border: '#1E293B',
-              },
-            },
-          },
-        },
-      };
-    </script>
-
     <link rel="stylesheet" href="./styles.css" />
-    <!-- D3.js v7 vía CDN para visualización analítica de alertas en Vanilla JS -->
-    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <!-- Tailwind CSS compilado en el build (antes, CDN de desarrollo) -->
+    <link rel="stylesheet" href="/src/styles.css" />
+    <!-- D3.js 7.9.0 vía CDN (versión fija) para la visualización de alertas -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   </head>
   <body class="bg-soc-canvas text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
     <!-- Barra superior de 3 zonas -->
@@ -68,7 +46,7 @@
         >
           <span class="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-slate-100 p-1 flex items-center justify-center shrink-0 ring-1 ring-slate-700/80 transition-transform duration-150 group-hover:scale-[1.03]">
             <img
-              src="assets/aistudio/icono_81a3db5b.png"
+              src="./assets/logo.png"
               alt="Logotipo de Un Fantasma en el Sistema"
               class="h-full w-full object-contain"
               referrerpolicy="no-referrer"

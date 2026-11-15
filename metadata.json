@@ -1,6 +1,0 @@
-{
-  "name": "DRP Tabletop — Simulador SOC",
-  "description": "Simulador educativo 100% frontend de Planes de Recuperación ante Desastres (DRP) con Dashboard de Mando estilo SOC, matriz BIA y registro de eventos.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
-}

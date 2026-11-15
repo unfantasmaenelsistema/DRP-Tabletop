@@ -4635,7 +4635,36 @@ function fnv1aHashHex(input) {
   return (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
 }
 
+/**
+ * La bandera CTF solo vale en un escenario oficial sin modificar. Antes bastaba importar un escenario
+ * con el mismo código y decisiones sin impacto para obtener una bandera de 100 puntos indistinguible.
+ * Se compara el escenario activo con los integrados (tal cual y normalizados, como quedan al importar
+ * o al restaurar la sesión).
+ */
+let officialScenarioSnapshots = null;
+function isOfficialScenario(scenario) {
+  if (!officialScenarioSnapshots) {
+    officialScenarioSnapshots = new Set();
+    for (const builtIn of BUILT_IN_SCENARIOS) {
+      let current = deepClone(builtIn);
+      officialScenarioSnapshots.add(JSON.stringify(current));
+      for (let round = 0; round < 2; round += 1) {
+        try {
+          current = validateAndNormalizeScenario(deepClone(current));
+          officialScenarioSnapshots.add(JSON.stringify(current));
+        } catch (_err) {
+          break;
+        }
+      }
+    }
+  }
+  return officialScenarioSnapshots.has(JSON.stringify(scenario));
+}
+
 function generateCtfFlag(scoreResult) {
+  if (!isOfficialScenario(activeScenario)) {
+    return { unlocked: false, flag: null, pointsMissing: 0, customScenario: true };
+  }
   if (scoreResult.totalScore <= 80) {
     return {
       unlocked: false,
@@ -4948,12 +4977,16 @@ function renderAfterActionReport() {
               CTF MODE · FLAG BLOQUEADO
             </div>
             <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
-              Se requiere una puntuación superior a <strong>80/100</strong> para generar el token <code class="font-mono text-sky-300">CTF{DRP_M4st3r_...}</code> (faltan ${ctfResult.pointsMissing} puntos).
+              ${
+                ctfResult.customScenario
+                  ? 'Escenario personalizado: el token <code class="font-mono text-sky-300">CTF{DRP_M4st3r_...}</code> solo se genera en los escenarios oficiales de GhostAcademy sin modificar.'
+                  : `Se requiere una puntuación superior a <strong>80/100</strong> para generar el token <code class="font-mono text-sky-300">CTF{DRP_M4st3r_...}</code> (faltan ${ctfResult.pointsMissing} puntos).`
+              }
             </p>
           </div>
         </div>
         <span class="text-xs font-mono text-slate-400 tabular-nums shrink-0">
-          ${scoreResult.totalScore} / 81 mín.
+          ${ctfResult.customScenario ? 'Personalizado' : `${scoreResult.totalScore} / 81 mín.`}
         </span>
       </section>
     `;
@@ -4962,7 +4995,7 @@ function renderAfterActionReport() {
     <!-- Encabezado exclusivo para impresión PDF -->
     <div class="aar-print-header hidden items-center justify-between border-b border-slate-300 pb-4 mb-4">
       <div class="flex items-center gap-3">
-        <img src="assets/aistudio/icono_81a3db5b.png" alt="Logo" class="h-10 w-10 object-contain" />
+        <img src="./assets/logo.png" alt="Logo" class="h-10 w-10 object-contain" />
         <div>
           <div class="text-base font-bold text-slate-900">After Action Report (AAR) — DRP Tabletop · GhostAcademy</div>
           <div class="text-xs text-slate-600">${escapeHtml(activeScenario.organization)} · ${escapeHtml(
@@ -5332,7 +5365,9 @@ function exportAarToMarkdown(scoreResult, ctfResult, lessons) {
     `- **Impacto económico total**: ${formatCurrencyEur(appState.accumulatedCostEur, true)}`,
     ctfResult.unlocked
       ? `- **Token CTF GhostAcademy**: \`${ctfResult.flag}\``
-      : `- **Token CTF GhostAcademy**: Bloqueado (requiere > 80 puntos)`,
+      : ctfResult.customScenario
+        ? `- **Token CTF GhostAcademy**: No disponible (solo en escenarios oficiales sin modificar)`
+        : `- **Token CTF GhostAcademy**: Bloqueado (requiere > 80 puntos)`,
     '',
     '## Comparativa BIA: Teórico vs. Real',
     '',

@@ -1,19 +1,32 @@
 <div align="center">
   <a href="https://www.unfantasmaenelsistema.com/" target="_blank" rel="noopener noreferrer">
-    <img src="public/assets/aistudio/icono_81a3db5b.png" alt="Logo Un Fantasma en el Sistema — GhostAcademy" width="88" />
+    <img src="./public/assets/logo.png" alt="Logo Un Fantasma en el Sistema — GhostAcademy" width="88" />
   </a>
 
   # DRP Tabletop — Centro de Mando y Simulación SOC
 
   **Simulador educativo 100% frontend de Planes de Recuperación ante Desastres (Disaster Recovery Plan) estilo Centro de Operaciones de Seguridad (SOC)**
 
-  [![GitHub Pages Ready](https://img.shields.io/badge/Deploy-GitHub%20Pages-0ea5e9?style=flat-square&logo=github)](./.github/workflows/deploy.yml)
+  [![Probar en GitHub Pages](https://img.shields.io/badge/Probar-en%20el%20navegador-0ea5e9?style=flat-square&logo=github)](https://unfantasmaenelsistema.github.io/DRP-Tabletop/)
   [![Vanilla JS](https://img.shields.io/badge/Stack-Vanilla%20JS%20%2B%20Tailwind%20%2B%20D3.js-10b981?style=flat-square)](#arquitectura-y-stack-técnico)
   [![100% Client-Side](https://img.shields.io/badge/Backend-Ninguno%20(100%25%20Local)-64748b?style=flat-square)](#)
   [![License: MIT](https://img.shields.io/badge/Licencia-MIT-f59e0b?style=flat-square)](./LICENSE)
 
-  Desarrollado para **[GhostAcademy — Un Fantasma en el Sistema](https://www.unfantasmaenelsistema.com/)**
+  **[▶ Abrir el simulador](https://unfantasmaenelsistema.github.io/DRP-Tabletop/)** · Desarrollado para **[GhostAcademy — Un Fantasma en el Sistema](https://www.unfantasmaenelsistema.com/)**
 </div>
+
+---
+
+## Tabla de Contenidos
+
+- [Descripción General](#descripción-general)
+- [Capturas Reales de la Aplicación](#capturas-reales-de-la-aplicación)
+- [Funcionalidades Principales](#funcionalidades-principales)
+- [Atajos de Teclado](#atajos-de-teclado)
+- [Arquitectura y Stack Técnico](#arquitectura-y-stack-técnico)
+- [Despliegue en GitHub Pages y Desarrollo Local](#despliegue-en-github-pages-y-desarrollo-local)
+- [Novedades de la versión 2](#novedades-de-la-versión-2)
+- [Autoría y Licencia](#autoría-y-licencia)
 
 ---
 
@@ -26,6 +39,8 @@ La aplicación funciona **íntegramente en el navegador** (sin backend ni llamad
 ---
 
 ## Capturas Reales de la Aplicación
+
+> Capturas de la versión 2 tomadas sobre la compilación de producción, jugando partidas reales del escenario de ransomware.
 
 ### 1. Dashboard de Mando (Estado de Preparación)
 Selector de escenarios integrados, KPIs operativos en tiempo real, barra de estrés y matriz BIA inicial.
@@ -46,6 +61,10 @@ Cuando un servicio crítico supera su RTO teórico, el simulador pausa el reloj 
 Evaluación de 0 a 100 puntos, medidor circular SVG, comparativa visual Teórico vs. Real de RTO/RPO por servicio, desglose de aciertos/errores, Lecciones Aprendidas automatizadas y generación del token `CTF{DRP_M4st3r_...}`.
 
 ![After Action Report y Flag CTF](docs/screenshots/04-after-action-report-ctf.png)
+
+### 5. Versión móvil
+
+<img src="docs/screenshots/05-movil.png" alt="DRP Tabletop en un móvil" width="300" />
 
 ---
 
@@ -72,11 +91,11 @@ Evaluación de 0 a 100 puntos, medidor circular SVG, comparativa visual Teórico
 - **After Action Report (AAR) Completo**:
   - **Puntuación 0–100** ponderada en 3 pilares: **RTO (35 pts)**, **RPO (30 pts)** y **Dinero Salvado (35 pts)**.
   - **Rangos corporativos**: `CISO Legendario` (`≥ 90`), `Arquitecto de Resiliencia` (`81–89`), `Analista SOC Senior` (`65–80`), `Administrador Novato` (`45–64`) y `Despedido` (`< 45`).
-  - **CTF Mode (GhostAcademy)**: Al superar **80/100 puntos**, genera un token verificable `CTF{DRP_M4st3r_<PUNTOS>PTS_<HASH>}`.
+  - **CTF Mode (GhostAcademy)**: Al superar **80/100 puntos** en uno de los **escenarios oficiales sin modificar**, genera el token `CTF{DRP_M4st3r_<PUNTOS>PTS_<HASH>}`, cuyo hash resume el escenario, la puntuación, las decisiones óptimas, el RTO, el RPO y el coste de la partida. Con un escenario importado o editado el informe lo indica y no da bandera. Es un comprobante educativo calculado en el navegador, no una firma criptográfica: sirve para la clase, no como prueba frente a alguien que manipule el código o el `localStorage`.
   - Exportación optimizada a **PDF** (`window.print()` con `@media print` en blanco limpio), **Markdown (`.md`)** y **Escenario Base64**.
 - **Persistencia y Modo Docente (Base64 + JSON)**:
   - Guardado automático de sesión en `localStorage`.
-  - Botones **Cargar Escenario desde String** y **Exportar Escenario (Base64)** / **Descargar JSON editable** para que instructores diseñen y compartan escenarios personalizados.
+  - Botones **Cargar Escenario desde String** y **Exportar Escenario (Base64)** / **Descargar JSON editable** para que instructores diseñen y compartan escenarios personalizados. Los textos de un escenario importado se muestran escapados: un escenario manipulado no ejecuta código en el navegador de quien lo carga.
 - **Guía Táctica DRP y Atajos de Teclado**:
   - Modal de referencia rápida accesible desde la barra superior o pulsando `?`.
 
@@ -96,34 +115,44 @@ Evaluación de 0 a 100 puntos, medidor circular SVG, comparativa visual Teórico
 ## Arquitectura y Stack Técnico
 
 - **HTML5 semántico** (`index.html`) con accesibilidad ARIA y diseño responsive.
-- **CSS3 + Tailwind CSS CDN** (`styles.css` + `@media print` dedicado para informes PDF y soporte `prefers-reduced-motion`).
-- **Vanilla JavaScript ES Module** (`app.js`) sin dependencias de frameworks ni servidor.
-- **D3.js v7** (vía CDN) para el gráfico de frecuencia de alertas en el Registro SOC.
-- **Vite** configurado con `base: './'` (`vite.config.ts`) para empaquetado estático compatible con subrutas de GitHub Pages.
+- **Tailwind CSS 3 compilado** con Vite en el build (antes se cargaba desde el CDN de desarrollo, que avisa de no usarse en producción) más `styles.css` con el `@media print` para los informes PDF y el soporte de `prefers-reduced-motion`. El aspecto es el mismo: comparado píxel a píxel en cinco vistas, en escritorio y en móvil.
+- **Vanilla JavaScript ES Module** (`app.js`) sin frameworks ni servidor.
+- **D3.js 7.9.0** (CDN con versión fija) para el gráfico de frecuencia de alertas en el Registro SOC.
+- **Estructura del repositorio**:
+  - `index.html`, `app.js` y `styles.css` — Aplicación.
+  - `src/styles.css`, `tailwind.config.js`, `postcss.config.js` y `vite.config.js` — Compilación (base relativa `./`, válida para la subruta de GitHub Pages).
+  - `public/assets/logo.png` — Emblema de la casa.
+  - `.github/workflows/deploy.yml` — Compilación con Bun y despliegue en GitHub Pages.
+  - `docs/screenshots/` — Capturas reales.
 
 ---
 
 ## Despliegue en GitHub Pages y Desarrollo Local
 
-### Despliegue automático con GitHub Actions (Recomendado)
-Este repositorio incluye el flujo [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml):
-1. Sube el proyecto a la rama `main` de tu repositorio en GitHub.
-2. Ve a **Settings → Pages → Build and deployment** y selecciona **GitHub Actions** como fuente (*Source*).
-3. Cada *push* a `main` compilará `dist/` con `npm run build` y publicará la web automáticamente.
+El flujo [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) se ejecuta en cada `push` a `main`: instala con Bun (`bun install --frozen-lockfile`), compila `./dist` y lo publica en https://unfantasmaenelsistema.github.io/DRP-Tabletop/ (en **Settings → Pages**, la fuente es **GitHub Actions**).
 
 ### Ejecución local
+
+Requisitos: **[Bun](https://bun.sh/)** (el proyecto usa `bun.lock`).
+
 ```bash
-# 1. Instalar dependencias de compilación (Vite)
-npm install
-
-# 2. Levantar servidor local de desarrollo (puerto 3000)
-npm run dev
-
-# 3. Generar build estático para producción en /dist
-npm run build
+git clone https://github.com/unfantasmaenelsistema/DRP-Tabletop.git
+cd DRP-Tabletop
+bun install
+bun run dev        # http://localhost:3000
+bun run build      # genera ./dist para publicar
 ```
 
-> También puedes abrir directamente el proyecto con cualquier servidor estático (`npx serve .`), ya que `index.html`, `styles.css` y `app.js` funcionan de forma autónoma en el navegador.
+Abrir `index.html` directamente ya no basta: los estilos de Tailwind se generan al compilar.
+
+---
+
+## Novedades de la versión 2
+
+- **Publicado en GitHub Pages.** El workflow fallaba (`npm ci` sin `package-lock.json` y Pages sin activar). Ahora compila con Bun y publica.
+- **La bandera CTF ya no se puede fabricar.** Bastaba importar un escenario con el mismo código que el oficial y decisiones sin impacto para sacar una bandera de 100 puntos idéntica a las legítimas. Ahora solo los escenarios oficiales sin modificar dan bandera, también tras recargar a mitad de partida.
+- **Tailwind compilado** y **D3 con versión fija** (`d3@7` podía cambiar sin aviso).
+- **Limpieza**: fuera el esqueleto de React, Gemini, Express y demás restos de AI Studio que no se usaban; el logo pasa a `public/assets/logo.png`.
 
 ---
 

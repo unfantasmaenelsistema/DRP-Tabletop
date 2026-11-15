@@ -1,6 +1,6 @@
 /* ==========================================================================
    DRP Tabletop Simulator — Estilos personalizados SOC / Centro de Mando
-   Complemento a Tailwind CSS CDN para despliegue estático en GitHub Pages
+   Complemento a Tailwind CSS (compilado en el build, ver src/styles.css)
    ========================================================================== */
 
 :root {
