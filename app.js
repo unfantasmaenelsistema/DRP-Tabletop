@@ -2058,6 +2058,9 @@ const appState = {
   currentTurnIndex: 0,
   turnRemainingSeconds: TURN_TIME_LIMIT_SECONDS,
   decisionHistory: [],
+  // Orden en pantalla de las opciones de cada turno (ids), barajado en cada simulación.
+  // En los escenarios integrados la óptima es siempre la primera del array.
+  decisionOrder: [],
   services: [],
   logs: [],
   triggeredEventIndices: new Set(),
@@ -2771,6 +2774,7 @@ function saveSessionToStorage() {
         currentTurnIndex: appState.currentTurnIndex,
         turnRemainingSeconds: appState.turnRemainingSeconds,
         decisionHistory: appState.decisionHistory,
+        decisionOrder: appState.decisionOrder,
         services: appState.services,
         logs: appState.logs.slice(-80),
         triggeredEventIndices: Array.from(appState.triggeredEventIndices),
@@ -2820,6 +2824,9 @@ function restoreSessionFromStorage() {
       ? Number(saved.turnRemainingSeconds)
       : TURN_TIME_LIMIT_SECONDS;
     appState.decisionHistory = Array.isArray(saved.decisionHistory) ? saved.decisionHistory : [];
+    appState.decisionOrder = isValidDecisionOrder(saved.decisionOrder)
+      ? saved.decisionOrder
+      : buildDecisionOrder();
     appState.services =
       Array.isArray(saved.services) && saved.services.length > 0
         ? saved.services
@@ -2864,6 +2871,7 @@ function initializeState(persistAfterInit = false) {
   appState.currentTurnIndex = 0;
   appState.turnRemainingSeconds = TURN_TIME_LIMIT_SECONDS;
   appState.decisionHistory = [];
+  appState.decisionOrder = buildDecisionOrder();
   appState.triggeredEventIndices = new Set();
   appState.rtoBreachedServiceIds = new Set();
   appState.activeSlaAlerts = [];
@@ -2900,6 +2908,52 @@ function initializeState(persistAfterInit = false) {
   }
 
   renderAll();
+}
+
+/* Orden de las opciones: se baraja la presentación, nunca los datos del escenario
+   (así la comprobación de escenario oficial y la bandera no cambian). */
+const DECISION_LETTERS = 'ABCDEFGH';
+
+function shuffleArray(items) {
+  const result = items.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function buildDecisionOrder() {
+  return activeScenario.turns.map((turn) =>
+    shuffleArray((Array.isArray(turn.decisions) ? turn.decisions : []).map((d) => d.id))
+  );
+}
+
+function isValidDecisionOrder(order) {
+  if (!Array.isArray(order) || order.length !== activeScenario.turns.length) return false;
+  return activeScenario.turns.every((turn, tIdx) => {
+    const ids = (turn.decisions || []).map((d) => d.id);
+    const saved = order[tIdx];
+    return (
+      Array.isArray(saved) &&
+      saved.length === ids.length &&
+      ids.every((id) => saved.includes(id))
+    );
+  });
+}
+
+function getOrderedDecisions(turnIndex) {
+  const turn = activeScenario.turns[turnIndex];
+  if (!turn || !Array.isArray(turn.decisions)) return [];
+  const order = appState.decisionOrder[turnIndex];
+  if (!Array.isArray(order) || order.length !== turn.decisions.length) return turn.decisions;
+  const ordered = order.map((id) => turn.decisions.find((d) => d.id === id)).filter(Boolean);
+  return ordered.length === turn.decisions.length ? ordered : turn.decisions;
+}
+
+function getDisplayDecisionKey(turnIndex, decisionId) {
+  const pos = getOrderedDecisions(turnIndex).findIndex((d) => d.id === decisionId);
+  return pos >= 0 ? DECISION_LETTERS[pos] || String(pos + 1) : '?';
 }
 
 function cryptoRandomId() {
@@ -3197,7 +3251,10 @@ function handleTurnTimeout() {
   appendLog(
     'CRITICAL',
     'TEMPORIZADOR',
-    `TIEMPO AGOTADO (${TURN_TIME_LIMIT_SECONDS}s) en ${currentTurn.phaseFullTitle}. El sistema aplica la opción más adversa (${worstDecision.key}) y una penalización por parálisis operativa.`
+    `TIEMPO AGOTADO (${TURN_TIME_LIMIT_SECONDS}s) en ${currentTurn.phaseFullTitle}. El sistema aplica la opción más adversa (${getDisplayDecisionKey(
+      appState.currentTurnIndex,
+      worstDecision.id
+    )}) y una penalización por parálisis operativa.`
   );
 
   applyDecisionOutcome(currentTurn, worstDecision, true);
@@ -3217,6 +3274,8 @@ function handleDecisionSelection(decisionId) {
 
 function applyDecisionOutcome(currentTurn, selectedDecision, isTimeout = false) {
   const impact = selectedDecision.hiddenImpact;
+  // Letra tal como la vio el alumno (el orden de las opciones se baraja en cada simulación)
+  const displayKey = getDisplayDecisionKey(appState.currentTurnIndex, selectedDecision.id);
   const extraRto = isTimeout ? TIMEOUT_PENALTY.rtoMinutes : 0;
   const extraRpo = isTimeout ? TIMEOUT_PENALTY.rpoMinutes : 0;
   const extraCost = isTimeout ? TIMEOUT_PENALTY.costEur : 0;
@@ -3271,7 +3330,7 @@ function applyDecisionOutcome(currentTurn, selectedDecision, isTimeout = false) 
     turnNumber: currentTurn.turnNumber,
     phaseName: currentTurn.phaseName,
     injectCode: currentTurn.inject.code,
-    decisionKey: selectedDecision.key,
+    decisionKey: displayKey,
     decisionTitle: selectedDecision.title,
     timedOut: isTimeout,
     evaluation: isTimeout ? 'critical' : impact.evaluation || 'suboptimal',
@@ -3295,7 +3354,7 @@ function applyDecisionOutcome(currentTurn, selectedDecision, isTimeout = false) 
   appendLog(
     isTimeout ? 'CRITICAL' : 'INFO',
     `DECISIÓN-T${currentTurn.turnNumber}`,
-    `${isTimeout ? '[AUTO POR TIMEOUT] ' : ''}Opción ${selectedDecision.key} ejecutada: "${
+    `${isTimeout ? '[AUTO POR TIMEOUT] ' : ''}Opción ${displayKey} ejecutada: "${
       selectedDecision.title
     }".`
   );
@@ -3841,9 +3900,9 @@ function renderTriagePanel() {
     `
     : '';
 
-  const decisionButtonsHtml = currentTurn.decisions
+  const decisionButtonsHtml = getOrderedDecisions(appState.currentTurnIndex)
     .map(
-      (opt) => `
+      (opt, pos) => `
       <button
         type="button"
         data-decision-id="${escapeHtml(opt.id)}"
@@ -3852,7 +3911,7 @@ function renderTriagePanel() {
       >
         <div class="flex items-start gap-3.5">
           <span class="mt-0.5 h-7 w-7 rounded-md border border-slate-700 bg-soc-elevated group-hover:border-sky-500/60 group-hover:text-sky-300 font-mono text-xs font-semibold text-slate-300 flex items-center justify-center shrink-0 transition-colors duration-150">
-            ${escapeHtml(opt.key)}
+            ${escapeHtml(DECISION_LETTERS[pos] || String(pos + 1))}
           </span>
           <div class="space-y-1 flex-1 min-w-0">
             <div class="text-sm font-semibold text-slate-100 group-hover:text-sky-200 transition-colors duration-150">
@@ -5782,7 +5841,7 @@ function bindEvents() {
 
       const keyMap = { '1': 0, a: 0, '2': 1, b: 1, '3': 2, c: 2, '4': 3, d: 3 };
       if (Object.prototype.hasOwnProperty.call(keyMap, lowerKey)) {
-        const option = currentTurn.decisions[keyMap[lowerKey]];
+        const option = getOrderedDecisions(appState.currentTurnIndex)[keyMap[lowerKey]];
         if (option) {
           event.preventDefault();
           handleDecisionSelection(option.id);

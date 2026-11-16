@@ -105,7 +105,7 @@ Evaluación de 0 a 100 puntos, medidor circular SVG, comparativa visual Teórico
 
 | Tecla | Acción |
 | :---: | :--- |
-| `A`–`D` o `1`–`4` | Ejecutar opción del turno activo (*Decisiones Bajo Presión*) |
+| `A`–`D` o `1`–`4` | Ejecutar la opción que aparece con esa letra en el turno activo (*Decisiones Bajo Presión*; el orden se baraja en cada simulación) |
 | `P` | Pausar o reanudar la simulación |
 | `?` | Abrir o cerrar la Guía Táctica DRP y glosario |
 | `Esc` | Cerrar el modal activo (Guía, Base64 o Alerta SLA) |
@@ -150,6 +150,7 @@ Abrir `index.html` directamente ya no basta: los estilos de Tailwind se generan 
 ## Novedades de la versión 2
 
 - **Publicado en GitHub Pages.** El workflow fallaba (`npm ci` sin `package-lock.json` y Pages sin activar). Ahora compila con Bun y publica.
+- **Opciones en orden aleatorio.** En los tres escenarios la decisión óptima era siempre la A: pulsando A cinco veces se sacaba la bandera sin leer nada. Ahora el orden de las opciones se baraja en cada simulación (y se conserva si recargas a mitad de partida); las letras del registro y del informe son las que vio el alumno.
 - **La bandera CTF ya no se puede fabricar.** Bastaba importar un escenario con el mismo código que el oficial y decisiones sin impacto para sacar una bandera de 100 puntos idéntica a las legítimas. Ahora solo los escenarios oficiales sin modificar dan bandera, también tras recargar a mitad de partida.
 - **Tailwind compilado** y **D3 con versión fija** (`d3@7` podía cambiar sin aviso).
 - **Limpieza**: fuera el esqueleto de React, Gemini, Express y demás restos de AI Studio que no se usaban; el logo pasa a `public/assets/logo.png`.
